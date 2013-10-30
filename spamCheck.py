@@ -12,6 +12,7 @@ def process(fname, prfx=""):
     out = ""
     subjs = {}
     senders = {}
+    recips = {}
     eds = {}
     sendPat = re.compile(r"([^<]+)<\S+>")
     edPat = re.compile(r"\bED\b")
@@ -19,20 +20,21 @@ def process(fname, prfx=""):
         for ln in spamfile:
             if ln.startswith("From "):
                 out += "\n"
-            elif ln.startswith("From: ") or ln.startswith("Subject: "):
+            elif ln.startswith("Subject: "):
                 out += ln
-                if ln.startswith("Subject: "):
-                    sub = ln.split(" ", 1)[1]
+                sub = ln.split(" ", 1)[1]
+                try:
+                    subjs[sub] += 1
+                except KeyError:
+                    subjs[sub] = 1
+                if edPat.search(ln):
                     try:
-                        subjs[sub] += 1
+                        eds[sub] += 1
                     except KeyError:
-                        subjs[sub] = 1
-                    if edPat.search(ln):
-                        try:
-                            eds[sub] += 1
-                        except KeyError:
-                            eds[sub] = 1
-                else:
+                        eds[sub] = 1
+            elif ln.startswith("From: ") or ln.startswith("X-Original-To: "):
+                out += ln
+                if ln[0] == "F":
                     # Extract the quoted name if possible
                     nm = ln.lstrip("From: ")
                     mtch = sendPat.match(nm)
@@ -41,6 +43,12 @@ def process(fname, prfx=""):
                     else:
                         key = nm
                     senders[key] = 1
+                else:
+                    nm = ln.lstrip("X-Original-To: ")
+                    try:
+                        recips[nm] += 1
+                    except KeyError:
+                        recips[nm] = 1
 
     subkeys = [(999-v, k) for k,v in subjs.items()]
     subkeys.sort()
@@ -51,6 +59,12 @@ def process(fname, prfx=""):
     fromkeys.sort()
     fromlist = "\n".join(fromkeys)
     numkeys = len(subkeys)
+
+    recipkeys = [(999-v, k) for k,v in recips.items()]
+    recipkeys.sort()
+    recipnumsTmp = ["[%s] %s" % (recips[kk], kk.strip()) for vv,kk in recipkeys]
+    recipnums = [ss.replace("[1] ", "") for ss in recipnumsTmp]
+    reciplist = "\n".join(recipnums)
 
     edkeys = [(999-v, k) for k,v in eds.items()]
     edkeys.sort()
@@ -75,6 +89,10 @@ Subjects:
 
 Filtered Message Total: %(numkeys)s
 To Delete: <http://mail.leafe.com/cgi-bin/delspam/%(justfname)s>
+
+Recipients:
+============
+%(reciplist)s
 
 ED Subjects:
 ============
@@ -116,9 +134,12 @@ def main(prfx):
     newname = os.path.join(fpath, "checked", "%s.%s" % (justname, ext))
 
     # Copy the contents
-    open(newname, "w").write(open(fname).read())
+    with open(newname, "w") as newspam:
+        with open(fname) as oldspam:
+            newspam.write(oldspam.read())
     # Blank the old
-    open(fname, "w")
+    with open(fname, "w") as oldspam:
+        pass
     os.chmod(newname, 0666)
 
     # Process the file
