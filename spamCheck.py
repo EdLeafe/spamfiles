@@ -62,8 +62,7 @@ def process(fname, prfx=""):
 
     recipkeys = [(999-v, k) for k,v in recips.items()]
     recipkeys.sort()
-    recipnumsTmp = ["[%s] %s" % (recips[kk], kk.strip()) for vv,kk in recipkeys]
-    recipnums = [ss.replace("[1] ", "") for ss in recipnumsTmp]
+    recipnums = ["[%s] %s" % (recips[kk], kk.strip()) for vv,kk in recipkeys]
     reciplist = "\n".join(recipnums)
 
     edkeys = [(999-v, k) for k,v in eds.items()]
