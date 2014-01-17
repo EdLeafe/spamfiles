@@ -148,6 +148,13 @@ if __name__ == "__main__":
 
 	with OutputHandler() as logger:
 		msgText = getMsg()
+
+#		with open("/var/dummylogs/raw_messages.txt", "a") as tt:
+#			tt.write(msgText)
+#			tt.write("\n\n")
+#			tt.write("-=" * 40)
+#			tt.write("\n\n\n")
+
 		eml = email.message_from_string(msgText)
 		tm = time.strftime("%Y-%m-%d %I:%M:%S %p")
 		logger.write("%s - %s: \n\tSubject: %s\n\tFrom: %s" % (tm, listname,
