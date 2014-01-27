@@ -4,7 +4,7 @@
 import sys
 import os
 from subprocess import Popen, PIPE
-import tempfile
+import tempopen
 import re
 import time
 import smtplib
@@ -34,7 +34,7 @@ class OutputHandler(object):
         self.out.append(txt)
 
     def _close(self):
-        with file("/var/dummylogs/filter.log", "a", 0) as ff:
+        with open("/var/dummylogs/filter.log", "a", 0) as ff:
             txt = "\n".join(self.out)
             ff.write("%s\n\n" % txt)
 
@@ -67,7 +67,7 @@ def processPFT(msg, eml):
     OTlog = "/var/dummylogs/techForward.log"
     bannedName = isBannedFromTech(msg)
     if bannedName:
-        with file(OTlog, "a") as ff:
+        with open(OTlog, "a") as ff:
             ff.write("Message from %s BANNED from tech; subject: %s\n" % (bannedName, eml["Subject"]))
         return None
 
@@ -100,7 +100,7 @@ def processPFT(msg, eml):
                 logtext = "   <<OT>> Subject: %s  - NOT FORWARDED  (len=%s)\n"
             else:
                 logtext = "Subject: %s  Length: %s\n"
-            with file(OTlog, "a") as ff:
+            with open(OTlog, "a") as ff:
                 ff.write(logtext % (eml["Subject"], outlen))
         except StandardError as e:
             server = smtplib.SMTP(MAILHOST)
@@ -114,7 +114,7 @@ def processPFT(msg, eml):
 
     except StandardError as e:
         try:
-            with file('/usr/local/mailman/badForward.error', 'a') as ff:
+            with open('/usr/local/mailman/badForward.error', 'a') as ff:
                 ff.write("\n\n\n%s\n------\n%s\n%s" % (time.localtime(), e, msg))
         except Exception:
             server = smtplib.SMTP(MAILHOST)
@@ -149,20 +149,21 @@ if __name__ == "__main__":
     with OutputHandler() as logger:
         msgText = getMsg()
 
-#        with open("/var/dummylogs/raw_messages.txt", "a") as tt:
-#            tt.write(msgText)
-#            tt.write("\n\n")
-#            tt.write("-=" * 40)
-#            tt.write("\n\n\n")
+        with open("/var/dummylogs/raw_messages.txt", "a") as tt:
+            tt.write(msgText)
+            tt.write("\n\n")
+            tt.write("-=" * 40)
+            tt.write("\n\n\n")
 
         eml = email.message_from_string(msgText)
+        subj = eml.get("Subject", "")
         tm = time.strftime("%Y-%m-%d %I:%M:%S %p")
         logger.write("%s - %s: \n\tSubject: %s\n\tFrom: %s" % (tm, listname,
-                eml.get("Subject", ""), eml.get("From", "")))
+                subj, eml.get("From", "")))
 
         fd, tmpname = tempfile.mkstemp(dir="/home/ed/spam/tmpfiles/")
         os.close(fd)
-        with file(tmpname, "w") as ftmp:
+        with open(tmpname, "w") as ftmp:
             ftmp.write(msgText)
 
         # Run the actual command
@@ -183,7 +184,8 @@ if __name__ == "__main__":
                     badmsg = "*** Deleted TeaParty Crap ***"
                 else:
                     # Spam; copy it to the spam file
-                    file("/home/ed/spam/listspammail", "a").write("%s\n" % out)
+                    with open("/home/ed/spam/listspammail", "a") as ff:
+                        ff.write("%s\n" % out)
                     badmsg = "***Removed as SPAM"
                 
                 # Record the from address and subject
@@ -198,7 +200,8 @@ if __name__ == "__main__":
         #out = qo.read()
         if "X-Virus-Found: yes" in out:
             # Spam; copy it to the spam file
-            file("/var/mail/virusmail", "a").write(out)
+            with open("/var/mail/virusmail", "a") as ff:
+                ff.write(out)
             logger.write("\t***Removed as VIRUS")
             os.remove(tmpname)
             sys.exit()
@@ -211,7 +214,7 @@ if __name__ == "__main__":
                 logger.write("\t--> Removed as OT")
                 sys.exit(0)
 
-        with file(tmpname, "w") as ftmp:
+        with open(tmpname, "w") as ftmp:
             ftmp.write(out)
         #logger.write("--wrote tmp file; size=%s--" % len(out))
 
@@ -236,16 +239,19 @@ if __name__ == "__main__":
 
         outtxt, errtxt = runproc(cmd)
         logger.write("re-writing to tmpfile: %s" % len(outtxt))
+        fd, tmpname_out = tempfile.mkstemp(dir="/home/ed/spam/tmpfiles/")
+        os.close(fd)
         try:
-            logger.write("writing to %s" % tmpname)
-            file(tmpname, "w").write(outtxt)
-            logger.write("TMPFILE write OK")
+            logger.write("writing output to %s" % tmpname_out)
+            with open(tmpname_out, "w") as ff:
+                ff.write(outtxt)
+            logger.write("TMPFILE_out write OK")
         except StandardError as e:
             logger.write("WRITE ERR: %s" % e)
             sys.exit()
         logger.write("GONNA POST: %s" % len(outtxt))
 
-        cmd = "cat %(tmpname)s | /usr/local/mailman/mail/mailman post %(listname)s" % locals()
+        cmd = "cat %(tmpname_out)s | /usr/local/mailman/mail/mailman post %(listname)s" % locals()
         try:
             out, err = runproc(cmd)
             #logger.write("POST RESULT: %s" % qo.read())
