@@ -4,7 +4,7 @@
 import sys
 import os
 from subprocess import Popen, PIPE
-import tempopen
+import tempfile
 import re
 import time
 import smtplib
