@@ -60,6 +60,15 @@ def process(fname, prfx=""):
     fromlist = "\n".join(fromkeys)
     numkeys = len(subkeys)
 
+    # Remove the most likely subjects
+    spamwords = [
+            "refinance",
+            "obama",
+            "testosterone",
+            "president",
+            "shopping",
+            ]
+
     recipkeys = [(999-v, k) for k,v in recips.items()]
     recipkeys.sort()
     recipnums = ["[%s] %s" % (recips[kk], kk.strip()) for vv,kk in recipkeys]
