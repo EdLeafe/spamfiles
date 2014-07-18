@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
+import datetime
 import os
-import time
-import smtplib
 import re
+import smtplib
+import sys
+import time
 
 
 def process(fname, prfx=""):
@@ -136,10 +137,12 @@ def main(prfx):
     fpath, justname = os.path.split(fname)
 
     # Get a unique name for the file
-    ext = 0
-    while os.path.exists(os.path.join(fpath, "checked", "%s.%s" % (justname, ext))):
-        ext += 1
-    newname = os.path.join(fpath, "checked", "%s.%s" % (justname, ext))
+    sprfx = prfx.strip()
+    nm = sprfx + datetime.datetime.now().strftime("%Y%b%d_%H%M")
+    if os.path.exists(os.path.join(fpath, "checked", nm)):
+        # Add the seconds if needed
+        nm = sprfx + datetime.datetime.now().strftime("%Y%b%d_%H%M%S")
+    newname = os.path.join(fpath, "checked", nm)
 
     # Copy the contents
     with open(newname, "w") as newspam:

@@ -254,6 +254,6 @@ if __name__ == "__main__":
         cmd = "cat %(tmpname_out)s | /usr/local/mailman/mail/mailman post %(listname)s" % locals()
         try:
             out, err = runproc(cmd)
-            #logger.write("POST RESULT: %s" % qo.read())
+            logger.write("POST RESULT: %s" % out)
         except StandardError as e:
             logger.write("ERROR: %s, %s" % (type(e), e))
