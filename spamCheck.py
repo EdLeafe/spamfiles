@@ -51,7 +51,9 @@ def process(fname, prfx=""):
                     except KeyError:
                         recips[nm] = 1
 
-    subkeys = [(999-v, k) for k,v in subjs.items()]
+    itms = subjs.items()
+    total = sum([v for k, v in itms])
+    subkeys = [(999-v, k) for k,v in itms]
     subkeys.sort()
     subnumsTmp = ["[%s] %s" % (subjs[kk], kk.strip()) for vv,kk in subkeys]
     subnums = [ss.replace("[1] ", "") for ss in subnumsTmp]
@@ -59,7 +61,6 @@ def process(fname, prfx=""):
     fromkeys = senders.keys()
     fromkeys.sort()
     fromlist = "\n".join(fromkeys)
-    numkeys = len(subkeys)
 
     # Remove the most likely subjects
     spamwords = [
@@ -89,14 +90,14 @@ def process(fname, prfx=""):
 Time: %(tm)s
 Spam File: %(fname)s
 
-Filtered Message Total: %(numkeys)s
+Filtered Message Total: %(total)s
 To Delete: <http://mail.leafe.com/cgi-bin/delspam/%(justfname)s>
 
 Subjects:
 ==========
 %(sublist)s
 
-Filtered Message Total: %(numkeys)s
+Filtered Message Total: %(total)s
 To Delete: <http://mail.leafe.com/cgi-bin/delspam/%(justfname)s>
 
 Recipients:
