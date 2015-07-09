@@ -23,7 +23,7 @@ def process(fname, prfx=""):
                 out += "\n"
             elif ln.startswith("Subject: "):
                 out += ln
-                sub = ln.split(" ", 1)[1]
+                sub = ln.split(" ", 1)[1].strip()
                 try:
                     subjs[sub] += 1
                 except KeyError:
@@ -42,10 +42,10 @@ def process(fname, prfx=""):
                     if mtch:
                         key = mtch.groups()[0].strip()
                     else:
-                        key = nm
+                        key = nm.strip()
                     senders[key] = 1
                 else:
-                    nm = ln.lstrip("X-Original-To: ")
+                    nm = ln.lstrip("X-Original-To: ").strip()
                     try:
                         recips[nm] += 1
                     except KeyError:
