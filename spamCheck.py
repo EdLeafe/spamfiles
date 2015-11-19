@@ -36,6 +36,7 @@ def process(fname, prfx=""):
             elif ln.startswith("From: ") or ln.startswith("X-Original-To: "):
                 out += ln
                 if ln[0] == "F":
+#283602 From: Fidelity 500K Term Life <Fidelity-500K-Term-Life@usefullifeplanlove.xyz>
                     # Extract the quoted name if possible
                     nm = ln.lstrip("From: ")
                     mtch = sendPat.match(nm)
@@ -43,9 +44,10 @@ def process(fname, prfx=""):
                         key = mtch.groups()[0].strip()
                     else:
                         key = nm.strip()
+                    key = key.strip('"')
                     senders[key] = 1
                 else:
-                    nm = ln.lstrip("X-Original-To: ").strip()
+                    nm = ln.split("X-Original-To: ")[-1].strip()
                     try:
                         recips[nm] += 1
                     except KeyError:
